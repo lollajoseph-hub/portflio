@@ -123,7 +123,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .stat .n { font-family: var(--serif); font-size: 72px; line-height: 1; color: var(--text); }
 .stat .n em { font-style: normal; color: var(--accent); }
 .stat .t { font-size: 18px; line-height: 1.4; color: var(--muted); margin-top: 12px; }
-#s-cover .kicker { position: absolute; right: 130px; top: 170px; font-family: var(--serif); font-style: italic; font-size: 34px; color: var(--muted); text-align: right; line-height: 1.2; }
+#s-cover .name { font-size: 200px; position: relative; z-index: 2; }
+.portrait-photo { position: absolute; right: 130px; top: 104px; width: 470px; height: 600px; margin: 0; z-index: 1; }
+.portrait-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; border-radius: 4px 4px 220px 220px / 4px 4px 260px 260px; filter: grayscale(1) contrast(1.05) brightness(.95);
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 100%); mask-image: linear-gradient(to bottom, #000 70%, transparent 100%); }
+.portrait-photo::after { content: ""; position: absolute; inset: 0; border-radius: 4px 4px 220px 220px / 4px 4px 260px 260px; background: linear-gradient(200deg, transparent 40%, rgba(232,116,59,.18)); mix-blend-mode: soft-light; pointer-events: none; }
+#s-cover .kicker { position: absolute; left: -40px; bottom: 40px; font-family: var(--serif); font-style: italic; font-size: 36px; color: var(--text); line-height: 1.15; text-shadow: 0 2px 20px rgba(0,0,0,.6); }
+#s-cover .role, #s-cover .lede { max-width: 1120px; position: relative; z-index: 2; }
+#s-cover .stats { position: relative; z-index: 2; }
 
 /* ---------- about ---------- */
 .two { display: grid; grid-template-columns: 1.15fr 1fr; gap: 110px; align-items: start; }
@@ -317,7 +324,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .portrait .h-xl { font-size: 170px; }
 .portrait .h-l { font-size: 96px; }
 .portrait .lede { font-size: 31px; }
-.portrait #s-cover .kicker { position: static; text-align: left; margin-bottom: 40px; }
+.portrait .portrait-photo { position: relative; right: auto; top: auto; width: 520px; height: 600px; margin: 0 0 30px; }
+.portrait #s-cover .kicker { left: auto; right: -260px; bottom: 60px; }
+.portrait #s-cover .name { font-size: 170px; }
 .portrait .stats { grid-template-columns: repeat(2, 1fr); }
 .portrait .stat { padding: 26px 20px 26px 0; border-bottom: 1px solid var(--line); }
 .portrait .stat:nth-child(2n) { border-right: 0; }
@@ -374,3 +383,18 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .portrait .tiles { grid-template-rows: none; height: auto; }
 .portrait .tile .imgs { flex: none; height: 210px; }
 .portrait .stack2 { grid-template-rows: auto auto; }
+
+/* cover with photo: text column left, portrait right */
+#s-cover .stats { grid-template-columns: repeat(3, 1fr); max-width: 1090px; margin-top: 48px; row-gap: 26px; }
+#s-cover .stat:nth-child(3n) { border-right: 0; }
+#s-cover .name { font-size: 190px; }
+#s-cover .role, #s-cover .lede { max-width: 1060px; }
+.portrait-photo { top: 110px; width: 560px; height: 800px; }
+.portrait-photo img { border-radius: 4px 4px 280px 280px / 4px 4px 320px 320px; }
+.portrait-photo::after { border-radius: 4px 4px 280px 280px / 4px 4px 320px 320px; }
+#s-cover .kicker { left: -60px; bottom: 90px; }
+.portrait #s-cover .stats { grid-template-columns: repeat(2, 1fr); max-width: none; }
+.portrait #s-cover .stat:nth-child(3n) { border-right: 1px solid var(--line); }
+.portrait #s-cover .stat:nth-child(2n) { border-right: 0; }
+.portrait .portrait-photo { width: 520px; height: 600px; }
+.portrait #s-cover .name { font-size: 170px; }

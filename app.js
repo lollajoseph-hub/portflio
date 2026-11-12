@@ -82,7 +82,7 @@
   }
   function leave(s) {
     s.querySelectorAll('video').forEach(v => v.pause());
-    s.querySelectorAll('.flip.flipped, .pcard.flipped').forEach(f => f.classList.remove('flipped'));
+    s.querySelectorAll('.flip.flipped, .pcard.flipped').forEach(f => { clearTimeout(f._settle); f.classList.remove('flipped', 'settled'); });
     s.querySelectorAll('.face.back').forEach(b => { b.scrollTop = 0; });
     s.dispatchEvent(new CustomEvent('leave'));
   }
@@ -102,9 +102,15 @@
   let wheelLock = 0, acc = 0;
   addEventListener('wheel', e => {
     if (menu.classList.contains('open')) return;
-    // inside a flipped case study, the wheel scrolls the case study instead of changing slides
-    const back = e.target.closest('.flip.flipped .face.back');
-    if (back && Math.abs(e.deltaY) >= Math.abs(e.deltaX) && back.scrollHeight > back.clientHeight + 2) return;
+    // While a case study is open, the wheel/trackpad never changes slides: it scrolls the case study
+    // (trackpad inertia and sideways drift used to fall through and jump to the previous slide).
+    const open = slides[cur] && slides[cur].querySelector('.flip.flipped');
+    if (open) {
+      const back = open.querySelector('.face.back');
+      if (!e.target.closest('.flip.flipped .face.back')) { e.preventDefault(); back.scrollTop += e.deltaY; }
+      acc = 0; return;
+    }
+    if (Date.now() < flipQuiet) { e.preventDefault(); acc = 0; return; }
     e.preventDefault();
     const now = Date.now(); if (now < wheelLock) return;
     acc += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
@@ -116,15 +122,33 @@
     if (menu.classList.contains('open') || e.target.closest('input, select, .calc')) return;
     const t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
     const vertical = root.classList.contains('portrait');
-    if (Math.abs(dy) > Math.abs(dx) && e.target.closest('.flip.flipped .face.back')) return; // scrolling a case study
+    if (e.target.closest('.flip.flipped')) return; // reading or scrolling an open case study
     const d = vertical && Math.abs(dy) > Math.abs(dx) ? dy : dx;
     if (Math.abs(d) > 50 && Date.now() - tt < 800) d < 0 ? next() : prev();
   }, { passive: true });
   addEventListener('hashchange', () => { const i = slides.findIndex(s => '#' + s.id.replace('s-', '') === location.hash); if (i >= 0) go(i); });
 
-  /* ---------- flips ---------- */
+  /* ---------- flips ----------
+     The 3D rotation only runs during the animation. Once a card has turned, it "settles" into a flat,
+     untransformed state, so text is drawn sharp at the stage's scale and clicks/scrolls land where they should. */
+  let flipQuiet = 0;
+  const FLIP_MS = reduce ? 20 : 1080;
+  function setFlip(el, on) {
+    clearTimeout(el._settle);
+    if (on) {
+      el.classList.add('flipped');
+      el._settle = setTimeout(() => el.classList.add('settled'), FLIP_MS);
+    } else {
+      if (el.classList.contains('settled')) {         // jump back to the rotated pose without animating, then turn back
+        el.classList.add('notrans'); el.classList.remove('settled'); void el.offsetWidth; el.classList.remove('notrans');
+      }
+      el.classList.remove('flipped');
+    }
+    flipQuiet = Date.now() + 900;
+  }
   function toggleFlip(f) {
-    const on = f.classList.toggle('flipped');
+    const on = !f.classList.contains('flipped');
+    setFlip(f, on);
     f.querySelector('.front').setAttribute('aria-hidden', String(on));
     f.querySelector('.back').setAttribute('aria-hidden', String(!on));
     const v = f.querySelector('video'); if (v) on ? v.pause() : v.play().catch(() => {});
@@ -132,7 +156,7 @@
   }
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-flip]'); if (b) { toggleFlip(document.getElementById(b.dataset.flip)); return; }
-    const c = e.target.closest('.pcard'); if (c) { c.classList.toggle('flipped'); c.setAttribute('aria-pressed', String(c.classList.contains('flipped'))); }
+    const c = e.target.closest('.pcard'); if (c) { const on = !c.classList.contains('flipped'); setFlip(c, on); c.setAttribute('aria-pressed', String(on)); }
   });
 
   /* ---------- video controls ---------- */

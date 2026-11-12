@@ -452,6 +452,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .btabs button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #150b05; }
 .bpane[hidden] { display: none; }
 
+/* settled flips: after the turn, drop all 3D so text is crisp and hit-testing is exact */
+.flip.settled, .pcard.settled { perspective: none; }
+.flip.settled .card, .pcard.settled .in { transform: none; transition: none; transform-style: flat; }
+.flip.settled .face.front, .pcard.settled .f { visibility: hidden; }
+.flip.settled .face.back, .pcard.settled .b { transform: none; backface-visibility: visible; -webkit-backface-visibility: visible; }
+.flip.notrans .card, .pcard.notrans .in { transition: none; }
+
 /* roleplay engine front */
 .rpface { padding: 30px 36px; background: linear-gradient(160deg, #10201f, var(--surface)); }
 .rpflow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }

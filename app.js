@@ -83,6 +83,7 @@
   function leave(s) {
     s.querySelectorAll('video').forEach(v => v.pause());
     s.querySelectorAll('.flip.flipped, .pcard.flipped').forEach(f => f.classList.remove('flipped'));
+    s.querySelectorAll('.face.back').forEach(b => { b.scrollTop = 0; });
     s.dispatchEvent(new CustomEvent('leave'));
   }
   function preload(n) { [n + 1, n - 1].forEach(i => slides[i]?.querySelectorAll('video').forEach(v => { if (v.preload === 'none') v.preload = 'metadata'; })); }
@@ -101,6 +102,9 @@
   let wheelLock = 0, acc = 0;
   addEventListener('wheel', e => {
     if (menu.classList.contains('open')) return;
+    // inside a flipped case study, the wheel scrolls the case study instead of changing slides
+    const back = e.target.closest('.flip.flipped .face.back');
+    if (back && Math.abs(e.deltaY) >= Math.abs(e.deltaX) && back.scrollHeight > back.clientHeight + 2) return;
     e.preventDefault();
     const now = Date.now(); if (now < wheelLock) return;
     acc += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
@@ -112,6 +116,7 @@
     if (menu.classList.contains('open') || e.target.closest('input, select, .calc')) return;
     const t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
     const vertical = root.classList.contains('portrait');
+    if (Math.abs(dy) > Math.abs(dx) && e.target.closest('.flip.flipped .face.back')) return; // scrolling a case study
     const d = vertical && Math.abs(dy) > Math.abs(dx) ? dy : dx;
     if (Math.abs(d) > 50 && Date.now() - tt < 800) d < 0 ? next() : prev();
   }, { passive: true });
@@ -164,6 +169,25 @@
       panel.textContent = b.dataset.text;
     });
   });
+
+  /* ---------- back-face panes (contribution | interactive) ---------- */
+  document.querySelectorAll('.btabs').forEach(bt => bt.addEventListener('click', e => {
+    const b = e.target.closest('[data-bpane]'); if (!b) return;
+    bt.querySelectorAll('[data-bpane]').forEach(x => { const on = x === b; x.setAttribute('aria-selected', String(on)); document.getElementById(x.dataset.bpane).hidden = !on; });
+  }));
+
+  /* ---------- GreyBarn: pipeline view <-> contribution view ---------- */
+  const gbBtn = document.querySelector('[data-view="gb"]');
+  if (gbBtn) {
+    const sl = gbBtn.closest('.slide'), view = document.getElementById('gb-contrib');
+    const setGB = on => {
+      sl.classList.toggle('show-contrib', on); view.hidden = !on;
+      gbBtn.setAttribute('aria-pressed', String(on)); gbBtn.textContent = on ? 'Back to the pipeline ⟲' : 'My contribution ⟲';
+      if (on && !reduce) view.animate([{ opacity: 0, transform: 'perspective(1600px) rotateX(10deg) translateY(24px)' }, { opacity: 1, transform: 'none' }], { duration: 650, easing: 'cubic-bezier(.16,1,.3,1)' });
+    };
+    gbBtn.addEventListener('click', () => setGB(!sl.classList.contains('show-contrib')));
+    sl.addEventListener('leave', () => setGB(false));
+  }
 
   /* ---------- match-score calculator (real formula from the Review Dashboard) ---------- */
   const calc = document.getElementById('matchcalc');
